@@ -61,7 +61,6 @@ Similar methods exist directly on the `$snapchat` object, which will fetch fresh
 If you save the Username and AuthToken, you can create a new instance of the `Snapchat` class at a later time with the `initWithAuthToken` method.
 
 ```
-$snapchat = new \Snapchat\Snapchat();
 $snapchat->initWithAuthToken("username", "auth_token");
 ```
 
