@@ -43,8 +43,7 @@ abstract class CasperAgent {
         CURLOPT_HEADER => false,
         CURLINFO_HEADER_OUT => true,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => "gzip",
-        CURLOPT_PROXY => "127.0.0.1:8888"
+        CURLOPT_ENCODING => "gzip"
     );
 
     public function setAPIKey($api_key = null){
