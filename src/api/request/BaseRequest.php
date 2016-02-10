@@ -4,6 +4,7 @@ namespace Snapchat\API\Request;
 
 use Snapchat\API\Constants;
 use Snapchat\API\Framework\Request;
+use Snapchat\API\Framework\Response;
 use Snapchat\Snapchat;
 
 abstract class BaseRequest extends Request {
@@ -12,6 +13,11 @@ abstract class BaseRequest extends Request {
      * @var Snapchat
      */
     public $snapchat;
+
+    /**
+     * @var Response
+     */
+    private $response;
 
     /**
      * @param $snapchat Snapchat The Snapchat instance to make the Request with.
@@ -36,6 +42,13 @@ abstract class BaseRequest extends Request {
     }
 
     /**
+     * @return int Get Response Code of Completed Request
+     */
+    public function getResponseCode(){
+        return $this->response->getCode();
+    }
+
+    /**
      * @return string The API Endpoint
      */
     public abstract function getEndpoint();
@@ -51,6 +64,15 @@ abstract class BaseRequest extends Request {
 
     public function parseResponse(){
         return true;
+    }
+
+    /**
+     * This method will be called before checking the Response is OK.
+     * @param $response Response
+     * @return bool If the Response was intercepted, and should stop being processed.
+     */
+    public function interceptResponse($response){
+        return false;
     }
 
     /**
@@ -84,6 +106,11 @@ abstract class BaseRequest extends Request {
         $this->casperAuthCallback($endpoint);
 
         $response = parent::execute();
+        $this->response = $response;
+
+        if($this->interceptResponse($response)){
+            return null;
+        }
 
         if(!$response->isOK()){
             throw new \Exception(sprintf("[%s] [%s] Request Failed!", $this->getEndpoint(), $response->getCode()));

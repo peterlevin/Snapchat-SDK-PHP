@@ -33,6 +33,16 @@ class FindFriendsRequest extends BaseRequest {
         return new FindFriendsResponse();
     }
 
+    public function interceptResponse($response){
+
+        if($response->getCode() == 304){
+            throw new \Exception("You have been temporarily blocked from using Find Friends by Snapchat.");
+        }
+
+        return parent::interceptResponse($response);
+
+    }
+
     /**
      * @return FindFriendsResponse
      * @throws \Exception
