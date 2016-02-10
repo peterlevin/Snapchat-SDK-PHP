@@ -30,6 +30,10 @@ Once I learn to use composer properly, I will convert the Developers API project
 
 ##Usage
 
+###Examples
+
+Take a look at the [Examples folder](./examples).
+
 ###Login
 
 To login, you will need to provide your Snapchat Username and Snapchat Password. If something goes wrong, an `Exception` will be thrown.
@@ -158,12 +162,9 @@ foreach($conversations as $conversation){
             $filename = sprintf("snaps/%s", $snap->getId());
             $mediapath = $snapchat->downloadSnap($snap, $filename);
 
-            $file_blob = $mediapath->getBlobPath();
-            $file_overlay = $mediapath->getOverlayPath();
-
-            echo "Blob saved to: " . $file_blob. "\n";
+            echo "Blob saved to: " . $mediapath->getBlobPath(). "\n";
             if($mediapath->overlayExists()){
-                echo "Overlay saved to: " . $file_overlay. "\n";
+                echo "Overlay saved to: " . $mediapath->getOverlayPath(). "\n";
             }
 
         }
@@ -175,7 +176,7 @@ foreach($conversations as $conversation){
 
 ##Documentation
 
-To see what else this library can do, take a look at the Documentation.
+At the moment, there's no proper documentation. However, [take a look at the examples](./examples) as well as the other methods in the `Snapchat` class.
 
 ##Developers
 
