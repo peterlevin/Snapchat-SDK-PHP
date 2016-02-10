@@ -54,6 +54,14 @@ abstract class BaseRequest extends Request {
     }
 
     /**
+     * This method will be called before the Snapchat API request is made.
+     * @param $endpointAuth object EndpointAuth from Casper Response
+     */
+    public function casperAuthCallback($endpointAuth){
+
+    }
+
+    /**
      *
      * Execute the Request
      *
@@ -72,6 +80,8 @@ abstract class BaseRequest extends Request {
         foreach($endpoint->params as $key => $value){
             $this->addParam($key, $value);
         }
+
+        $this->casperAuthCallback($endpoint);
 
         $response = parent::execute();
 

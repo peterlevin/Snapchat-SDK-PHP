@@ -1,6 +1,6 @@
 <?php
 
-namespace Snapchat\API\Crypto;
+namespace Snapchat\Crypto;
 
 class DeviceToken {
 

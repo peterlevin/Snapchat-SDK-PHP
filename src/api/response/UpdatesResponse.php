@@ -101,6 +101,12 @@ class UpdatesResponse extends BaseResponse {
     private $email;
 
     /**
+     * Mobile
+     * @var string
+     */
+    private $mobile;
+
+    /**
      * @return string
      */
     public function getBirthday()
@@ -354,6 +360,22 @@ class UpdatesResponse extends BaseResponse {
     public function setEmail($email)
     {
         $this->email = $email;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMobile()
+    {
+        return $this->mobile;
+    }
+
+    /**
+     * @param string $mobile
+     */
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
     }
 
 }

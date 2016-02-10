@@ -9,6 +9,7 @@ use Snapchat\API\Request\BlobRequest;
 use Snapchat\API\Request\ConversationAuthTokenRequest;
 use Snapchat\API\Request\ConversationRequest;
 use Snapchat\API\Request\ConversationsRequest;
+use Snapchat\API\Request\FindFriendsRequest;
 use Snapchat\API\Request\FriendRequest;
 use Snapchat\API\Request\LoginRequest;
 use Snapchat\API\Request\Model\SendMediaPayload;
@@ -19,6 +20,7 @@ use Snapchat\API\Request\StoriesRequest;
 use Snapchat\API\Request\UpdateSnapsRequest;
 use Snapchat\API\Request\UpdateStoriesRequest;
 use Snapchat\API\Request\UploadMediaRequest;
+use Snapchat\API\Request\PhoneVerifyRequest;
 use Snapchat\API\Response\FriendsResponse;
 use Snapchat\API\Response\Model\Conversation;
 use Snapchat\API\Response\Model\Snap;
@@ -73,6 +75,18 @@ class Snapchat {
     private $cached_stories_response;
 
     /**
+     * Device Token Identifier
+     * @var string
+     */
+    private $dtoken1i;
+
+    /**
+     * Device Token Verifier
+     * @var string
+     */
+    private $dtoken1v;
+
+    /**
      * Casper Developer API instance
      * @var string
      */
@@ -96,12 +110,25 @@ class Snapchat {
         $this->auth_token = $auth_token;
     }
 
+    public function initDeviceToken($dtoken1i, $dtoken1v){
+        $this->dtoken1i = $dtoken1i;
+        $this->dtoken1v = $dtoken1v;
+    }
+
     public function getUsername(){
         return $this->username;
     }
 
     public function getAuthToken(){
         return $this->auth_token;
+    }
+
+    public function getDeviceTokenIdentifier(){
+        return $this->dtoken1i;
+    }
+
+    public function getDeviceTokenVerifier(){
+        return $this->dtoken1v;
     }
 
     public function isLoggedIn(){
@@ -173,6 +200,13 @@ class Snapchat {
 
         $this->username = $this->cached_updates_response->getUsername();
         $this->auth_token = $this->cached_updates_response->getAuthToken();
+
+        $dtoken1i = $response->getDtoken1i();
+        $dtoken1v = $response->getDtoken1v();
+
+        if(!empty($dtoken1i) && !empty($dtoken1v)){
+            $this->initDeviceToken($dtoken1i, $dtoken1v);
+        }
 
         return $response;
 
@@ -741,6 +775,104 @@ class Snapchat {
 
     }
     */
+
+    /**
+     * @param $country string Country Code US, NZ, AU etc...
+     * @param $number string Phone Number to Verify
+     * @return API\Response\PhoneVerifyResponse
+     * @throws \Exception
+     */
+    public function updatePhoneNumber($country, $number){
+
+        if(!$this->isLoggedIn()){
+            throw new \Exception("You must be logged in to call updatePhoneNumber().");
+        }
+
+        $request = new PhoneVerifyRequest($this);
+        $request->updatePhoneNumber($country, $number);
+
+        $response = $request->execute();
+
+        if(!$response->isLogged()){
+            throw new \Exception(sprintf("Failed to Update Phone Number: %s", $response->getMessage()));
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * @param $country string Country Code US, NZ, AU etc...
+     * @param $number string Phone Number to Verify
+     * @return API\Response\PhoneVerifyResponse
+     * @throws \Exception
+     */
+    public function updatePhoneNumberWithCall($country, $number){
+
+        if(!$this->isLoggedIn()){
+            throw new \Exception("You must be logged in to call updatePhoneNumberWithCall().");
+        }
+
+        $request = new PhoneVerifyRequest($this);
+        $request->updatePhoneNumberWithCall($country, $number);
+
+        $response = $request->execute();
+
+        if(!$response->isLogged()){
+            throw new \Exception(sprintf("Failed to Update Phone Number: %s", $response->getMessage()));
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * @param $code string The Verification Code you received via Text or Call
+     * @return API\Response\PhoneVerifyResponse
+     * @throws \Exception
+     */
+    public function verifyPhoneNumber($code){
+
+        if(!$this->isLoggedIn()){
+            throw new \Exception("You must be logged in to call verifyPhoneNumber().");
+        }
+
+        $request = new PhoneVerifyRequest($this);
+        $request->verifyPhoneNumber($code);
+
+        $response = $request->execute();
+
+        if(!$response->isLogged()){
+            throw new \Exception(sprintf("Failed to Verify Phone Number: %s", $response->getMessage()));
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * @param $country string Country Code. US, NZ, AU etc...
+     * @param $query array Array of Names and Numbers to lookup. Format: array("number" => "name"); Maximum of 30 per Request.
+     * @return API\Response\FindFriendsResponse
+     * @throws \Exception
+     */
+    public function findFriends($country, $query){
+
+        if(!$this->isLoggedIn()){
+            throw new \Exception("You must be logged in to call findFriends().");
+        }
+
+        $updatesResponse = $this->getCachedUpdatesResponse();
+        if(empty($updatesResponse->getMobile())){
+            throw new \Exception("You must Verify your Phone Number to use Find Friends.");
+        }
+
+        $request = new FindFriendsRequest($this, $country, $query);
+        $response = $request->execute();
+
+        return $response;
+
+    }
 
     /**
      * Find a Cached Friend or AddedFriend
