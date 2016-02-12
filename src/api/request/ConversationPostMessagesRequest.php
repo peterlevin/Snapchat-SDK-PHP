@@ -14,6 +14,8 @@ class ConversationPostMessagesRequest extends BaseRequest {
     public function __construct($snapchat, $messages){
 
         parent::__construct($snapchat);
+
+        //todo: this doesn't work. (Due to Private Variables)
         $this->addParam("messages", json_encode($messages));
 
     }

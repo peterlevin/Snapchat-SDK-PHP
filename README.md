@@ -16,17 +16,17 @@ At this stage, the project is non-composer based...
 
 To get started using the SDK, you will need to include the AutoLoader script.
 
-Since we rely on the Casper Developers API, we need to provide an instance of `CasperDevelopersAPI` to the `Snapchat` constructor.
+Since we rely on the Casper Developer API, we need to provide an instance of `CasperDeveloperAPI` to the `Snapchat` constructor.
 
 ```
 require("./src/autoload.php");
-$casper = new CasperDevelopersAPI("api_key", "api_secret");
+$casper = new \Casper\Developer\CasperDeveloperAPI("api_key", "api_secret");
 $snapchat = new \Snapchat\Snapchat($casper);
 ```
 
-At the moment, the CasperDevelopersAPI project is embedded in the `./lib/` folder, and included in the `autoload.php`.
+At the moment, the `Casper-Developer-SDK-PHP` project is embedded in the `lib` folder, and included in the `autoload.php`.
 
-Once I learn to use composer properly, I will convert the Developers API project to composer based etc, and remove it from the `./lib/` folder.
+Once I learn to use composer, I will set it all up properly.
 
 ##Usage
 
@@ -64,7 +64,16 @@ Similar methods exist directly on the `$snapchat` object, which will fetch fresh
 
 If you save the Username and AuthToken, you can create a new instance of the `Snapchat` class at a later time with the `initWithAuthToken` method.
 
+You can get the Username and AuthToken from a logged in `Snapchat` instance with `getUsername` and `getAuthToken`, for saving somewhere...
+
 ```
+//Save these somewhere. Database etc.
+$username = $snapchat->getUsername();
+$authToken = $snapchat->getAuthToken();
+```
+
+```
+//New Instance somewhere else. example, another PHP file.
 $snapchat->initWithAuthToken("username", "auth_token");
 ```
 
@@ -120,20 +129,18 @@ foreach($conversations as $conversation){
 
 Unviewed Snaps can be downloaded with via the `downloadSnap` method.
 
-You need to pass in the `Snap` object you want to download, along with a File Path (as a string), in which the Snap will be saved to.
+You need to pass in the `Snap` object (or the Snap ID as a string) you want to download, along with a File Path, in which the Snap will be saved to.
 
 You can optionally provide a File Path for the Video Overlay. (If one isn't provided, it will be generated for you).
 
-File extensions (JPG/MP4) are automatically appended to the file name for you.
+File extensions are not automatically appended to the file name for you. If you have access to the `Snap` object, you can call `$snap->getFileExtension();` which will provide you with `jpg` or `mp4`, depending on the Snap type.
 
-If everything goes successfully, the `downloadSnap` method will return a `MediaPath` object, which contains the File Paths of the Saved media. (Blob and Overlay).
-
-An `Exception` will be thrown on Failure...
+If everything goes successfully, the `downloadSnap` method will return a `MediaPath` object, which contains the File Paths of the Saved media. (Blob and Overlay). Otherwise an `Exception` will be thrown on Failure...
 
 ```
 $snap = ...;
 
-$filename = sprintf("my_snap_folder/%s", $snap->getId());
+$filename = sprintf("my_snap_folder/%s.%s", $snap->getId(), $snap->getFileExtension());
 $mediapath = $snapchat->downloadSnap($snap, $filename);
 
 $file_blob = $mediapath->getBlobPath();
@@ -159,7 +166,7 @@ foreach($conversations as $conversation){
 
             echo "Downloading Snap from: " . $snap->getSender() . "\n";
 
-            $filename = sprintf("snaps/%s", $snap->getId());
+            $filename = sprintf("snaps/%s.%s", $snap->getId(), $snap->getFileExtension());
             $mediapath = $snapchat->downloadSnap($snap, $filename);
 
             echo "Blob saved to: " . $mediapath->getBlobPath(). "\n";
@@ -174,9 +181,79 @@ foreach($conversations as $conversation){
 }
 ```
 
+###Stories
+
+####Download My Stories
+
+```
+//Get Stories from Login Response
+$storiesResponse = $login->getStoriesResponse();
+
+foreach($storiesResponse->getMyStories() as $myStories){
+
+    $story = $myStories->getStory(); //The Story object
+    $storyNotes = $myStories->getStoryNotes(); //Details about who viewed your Story
+    $storyExtras = $myStories->getStoryExtras(); //View and Screenshot counts
+
+    //Where to Save the Story
+    $filename = sprintf("download/stories/%s.%s", $story->getId(), $story->getFileExtension());
+
+    //Download the Story
+    $mediapath = $snapchat->downloadStory($story, $filename);
+
+}
+```
+
+###Download Friend Stories
+
+All of the Stories posted by a User are inside of a container.
+
+The `getFriendStories()` method on the `StoriesResponse` instance will return an array of `FriendStory` objects.
+
+`FriendStory` objects contain the Friends username along with an array of `FriendStoryContainer` objects.
+
+Calling `getStories()` method on the `FriendStory` object will return the `FriendStoryContainer`.
+
+A `FriendStoryContainer` gives you access to the `Story` object posted by the user along with a boolean stating if you have seen the Story.
+
+```
+//Get Stories from Login Response
+$storiesResponse = $login->getStoriesResponse();
+
+//Iterate Friend Stories
+foreach($storiesResponse->getFriendStories() as $friendStories){
+
+    $friendStoriesUsername = $friendStories->getUsername();
+    $storiesContainer = $friendStories->getStories();
+    
+    foreach($storiesContainer as $storyContainer){
+
+        $story = $storyContainer->getStory();
+
+        echo "Downloading Story: " . $story->getId() . "\n";
+
+        //Where to Save the Files
+        $filename = sprintf("download/stories/%s", $story->getId());
+        $filename_overlay = sprintf("download/stories/%s_overlay", $story->getId());
+
+        //Download the Story
+        $mediapath = $snapchat->downloadStory($story, $filename, $filename_overlay);
+
+        echo "Story saved to: " . $mediapath->getBlobPath(). "\n";
+        if($mediapath->overlayExists()){
+            echo "Story Overlay saved to: " . $mediapath->getOverlayPath(). "\n";
+        }
+
+    }
+
+}
+```
+
 ##Documentation
 
-At the moment, there's no proper documentation. However, [take a look at the examples](./examples) as well as the other methods in the `Snapchat` class.
+At the moment, there's no proper documentation. However, the above gives you an overview of what the library can do.
+
+[Take a look at the examples](./examples) folder, as well as the methods available in the `Snapchat` class to see what else can be done.
 
 ##Developers
 

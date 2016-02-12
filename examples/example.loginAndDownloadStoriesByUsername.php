@@ -2,7 +2,7 @@
 
 require("../src/autoload.php");
 
-$casper = new CasperDevelopersAPI("api_key", "api_secret");
+$casper = new \Casper\Developer\CasperDeveloperAPI("api_key", "api_secret");
 $snapchat = new \Snapchat\Snapchat($casper);
 
 try {
@@ -13,6 +13,7 @@ try {
     //Get Stories from Login Response
     $storiesResponse = $login->getStoriesResponse();
 
+    //Iterate Friend Stories
     foreach($storiesResponse->getFriendStories() as $friendStories){
 
         //We only want Stories for this Username
@@ -42,6 +43,21 @@ try {
             break;
 
         }
+
+    }
+
+    //Iterate My Stories
+    foreach($storiesResponse->getMyStories() as $myStories){
+
+        $story = $myStories->getStory(); //The Story object
+        $storyNotes = $myStories->getStoryNotes(); //Details about who viewed your Story
+        $storyExtras = $myStories->getStoryExtras(); //View and Screenshot counts
+
+        //Where to Save the Story
+        $filename = sprintf("download/stories/%s.%s", $story->getId(), $story->getFileExtension());
+
+        //Download the Story
+        $mediapath = $snapchat->downloadStory($story, $filename);
 
     }
 

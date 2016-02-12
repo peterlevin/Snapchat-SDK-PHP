@@ -376,4 +376,24 @@ class Story {
         return $this->getMediaType() == self::TYPE_VIDEO || $this->getMediaType() == self::TYPE_VIDEO_NOAUDIO;
     }
 
+    /**
+     *
+     * Get the File Extension for this Story
+     *
+     * @return string
+     */
+    public function getFileExtension(){
+
+        if($this->isPhoto()){
+            return "jpg";
+        }
+
+        if($this->isVideo()){
+            return "mp4";
+        }
+
+        return "bin";
+
+    }
+
 }

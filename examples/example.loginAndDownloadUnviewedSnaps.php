@@ -2,7 +2,7 @@
 
 require("../src/autoload.php");
 
-$casper = new CasperDevelopersAPI("api_key", "api_secret");
+$casper = new \Casper\Developer\CasperDeveloperAPI("api_key", "api_secret");
 $snapchat = new \Snapchat\Snapchat($casper);
 
 try {
@@ -22,9 +22,11 @@ try {
             //Only Received Snaps that haven't been Viewed
             if($snap->wasReceived() && !$snap->hasBeenViewed()){
 
-                //Where to Save the Files
-                $filename = sprintf("downloads/snaps/%s", $snap->getId());
-                $filename_overlay = sprintf("downloads/snaps/%s_overlay", $snap->getId());
+                //Where to Save the Snap
+                $filename = sprintf("download/snaps/%s.%s", $snap->getId(), $snap->getFileExtension());
+
+                //Where to Save the Overlay (if it exists)
+                $filename_overlay = sprintf("download/snaps/%s_overlay.png", $snap->getId());
 
                 //Download the Snap
                 $mediapath = $snapchat->downloadSnap($snap, $filename, $filename_overlay);

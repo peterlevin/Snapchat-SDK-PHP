@@ -3,8 +3,8 @@
 
 namespace Snapchat\API\Framework;
 
-use JsonMapper;
 use Snapchat\API\Framework\Curl\Curl;
+use Snapchat\Util\JsonMapper\JsonMapper;
 
 abstract class Request {
 
@@ -24,6 +24,12 @@ abstract class Request {
     private $proxy;
 
     /**
+     * Proxy used for Requests
+     * @var string
+     */
+    private $verifyPeer = true;
+
+    /**
      * @var array HTTP Headers to send in Request
      */
     private $headers = array();
@@ -32,11 +38,6 @@ abstract class Request {
      * @var array Parameters to send in Request
      */
     private $params = array();
-
-    /**
-     * @var RequestFile[] Files to upload in Request
-     */
-    private $files = array();
 
     /**
      * @return string Request Method
@@ -58,6 +59,14 @@ abstract class Request {
      */
     public function setProxy($proxy){
         $this->proxy = $proxy;
+    }
+
+    /**
+     * Enable/Disable SSL Verification of Peer
+     * @param $verifyPeer boolean
+     */
+    public function setVerifyPeer($verifyPeer){
+        $this->verifyPeer = $verifyPeer;
     }
 
     /**
@@ -107,15 +116,6 @@ abstract class Request {
         return $this->params;
     }
 
-    /**
-     * @return RequestFile[] Request Files
-     */
-    /*
-    public function getFiles(){
-        return $this->files;
-    }
-    */
-
     public function clearHeaders(){
         return $this->headers = array();
     }
@@ -123,12 +123,6 @@ abstract class Request {
     public function clearParams(){
         return $this->params = array();
     }
-
-    /*
-    public function clearFiles(){
-        return $this->files = array();
-    }
-    */
 
     /**
      *
@@ -141,6 +135,8 @@ abstract class Request {
 
         $data = null;
         $curl = new Curl();
+
+        $curl->setOpt(CURLOPT_SSL_VERIFYPEER, $this->verifyPeer);
 
         if($this->proxy != null){
             $curl->setOpt(CURLOPT_PROXY, $this->proxy);

@@ -1,10 +1,8 @@
 <?php
 
-require("lib/Casper-Developer-SDK-PHP/autoload.php");
-
 spl_autoload_register(function($class){
 
-    $prefix = "Snapchat\\";
+    $prefix = "Casper\\Developer";
     $base_dir = __DIR__ . "/";
 
     $len = strlen($prefix);

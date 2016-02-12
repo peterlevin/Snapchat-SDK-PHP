@@ -2,7 +2,8 @@
 
 namespace Snapchat\API\Request;
 
-use CasperDevelopersAPI;
+use Casper\Developer\CasperDeveloperAPI;
+use Casper\Developer\Exception\CasperException;
 use Snapchat\API\Framework\Request;
 use Snapchat\API\Response\LoginResponse;
 
@@ -20,7 +21,7 @@ class LoginRequest extends Request {
 
     /**
      * Casper Developer API instance
-     * @var CasperDevelopersAPI
+     * @var CasperDeveloperAPI
      */
     private $casper;
 
@@ -53,7 +54,7 @@ class LoginRequest extends Request {
      * Execute the Request
      *
      * @return LoginResponse the Login Response
-     * @throws \CasperException
+     * @throws CasperException
      * @throws \Exception
      */
     public function execute(){
@@ -63,13 +64,13 @@ class LoginRequest extends Request {
 
         $login = $this->casper->getSnapchatIOSLogin($this->username, $this->password, $this->dtoken1i, $this->dtoken1v, $this->pre_auth_token);
 
-        $this->url = $login->url;
+        $this->url = $login["url"];
 
-        foreach($login->headers as $key => $value){
+        foreach($login["headers"] as $key => $value){
             $this->addHeader($key, $value);
         }
 
-        foreach($login->params as $key => $value){
+        foreach($login["params"] as $key => $value){
             $this->addParam($key, $value);
         }
 

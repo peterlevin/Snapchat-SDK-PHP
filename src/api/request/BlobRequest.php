@@ -2,19 +2,18 @@
 
 namespace Snapchat\API\Request;
 
-use Snapchat\API\Response\Model\Snap;
 use Snapchat\Snapchat;
 
 class BlobRequest extends BaseRequest {
 
     /**
      * @param $snapchat Snapchat
-     * @param $snap Snap
+     * @param $id string Snap ID to Download
      */
-    public function __construct($snapchat, $snap){
+    public function __construct($snapchat, $id){
 
         parent::__construct($snapchat);
-        $this->addParam("id", $snap->getId());
+        $this->addParam("id", $id);
 
     }
 

@@ -1,20 +1,21 @@
 <?php
 
-/**
- * @file
- * Base methods of the CasperAPI class.
- */
+namespace Casper\Developer;
+
+use Casper\Developer\Exception\CasperException;
+use Casper\Developer\Util\JWT;
+
 abstract class CasperAgent {
 
     /**
      * @var string Your Casper API Key
      */
-    public $API_KEY;
+    private $apiKey;
 
     /**
      * @var string Your Casper API Secret
      */
-    public $API_SECRET;
+    public $apiSecret;
 
     /**
      * The User-Agent used in requests to the Casper API
@@ -25,6 +26,16 @@ abstract class CasperAgent {
      * The Casper Developer API URL.
      */
     const URL = "https://casper-api.herokuapp.com";
+
+    /**
+     * @var string
+     */
+    private $proxy;
+
+    /**
+     * @var boolean
+     */
+    private $verifyPeer = true;
 
     /**
      * Default cURL headers.
@@ -46,12 +57,27 @@ abstract class CasperAgent {
         CURLOPT_ENCODING => "gzip"
     );
 
-    public function setAPIKey($api_key = null){
-        $this->API_KEY = $api_key;
+    public function setAPIKey($apiKey = null){
+        $this->apiKey = $apiKey;
     }
 
-    public function setAPISecret($api_secret = null){
-        $this->API_SECRET = $api_secret;
+    public function setAPISecret($apiSecret = null){
+        $this->apiSecret = $apiSecret;
+    }
+
+    /**
+     * @var $proxy string
+     * @var $verifyPeer boolean
+     */
+    public function setProxy($proxy, $verifyPeer = null){
+        $this->proxy = $proxy;
+    }
+
+    /**
+     * @var $verifyPeer boolean
+     */
+    public function setVerifyPeer($verifyPeer){
+        $this->verifyPeer = $verifyPeer;
     }
 
     /**
@@ -110,7 +136,7 @@ abstract class CasperAgent {
      * @param boolean $post
      *   true to make a POST request, else a GET request will be made.
      *
-     * @return stdClass
+     * @return array
      *   The JSON data returned from the API.
      *
      * @throws CasperException
@@ -130,17 +156,22 @@ abstract class CasperAgent {
 
         $headers = array_merge(self::$CURL_HEADERS, $headers);
 
-        $headers[] = "X-Casper-API-Key: " . $this->API_KEY;
+        $headers[] = "X-Casper-API-Key: " . $this->apiKey;
 
         curl_setopt_array($ch, self::$CURL_OPTIONS);
         curl_setopt($ch, CURLOPT_URL, self::URL . $endpoint);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->verifyPeer);
+
+        if($this->proxy != null){
+            curl_setopt($ch, CURLOPT_PROXY, $this->proxy);
+        }
 
         $jwt_params = array(
             "iat" => time()
         );
 
-        $jwt = JWT::encode(array_merge($jwt_params, $params), $this->API_SECRET, "HS256");
+        $jwt = JWT::encode(array_merge($jwt_params, $params), $this->apiSecret, "HS256");
 
         if($post){
             curl_setopt($ch, CURLOPT_POST, true);
@@ -151,24 +182,21 @@ abstract class CasperAgent {
 
         $response = curl_exec($ch);
 
-        //If cURL doesn't have a bundle of root certificates handy,
-        //we provide ours (see http://curl.haxx.se/docs/sslcerts.html).
         if(curl_errno($ch) == 60){
             curl_setopt($ch, CURLOPT_CAINFO, dirname(__FILE__) . "/ca_bundle.crt");
             $response = curl_exec($ch);
         }
 
-        //If the cURL request fails, return FALSE.
         if($response === FALSE){
             $error = curl_error($ch);
             curl_close($ch);
             throw new CasperException($error);
         }
 
-        $json = json_decode($response);
+        $json = json_decode($response, true);
         if($json == null){
             curl_close($ch);
-            throw new CasperException("[{$endpoint}] Failed to decode response!\nResponse: {$response}");
+            throw new CasperException(sprintf("[%s] Failed to decode response!\nResponse: %s", $endpoint, $response));
         }
 
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -176,10 +204,13 @@ abstract class CasperAgent {
 
             curl_close($ch);
 
-            if(isset($json->code) && isset($json->message)){
-                throw new CasperException("Casper API Response: [{$endpoint}] [{$json->code}] {$json->message}");
+            $json_code = $json["code"];
+            $json_message = $json["message"];
+
+            if(isset($json_code) && isset($json_message)){
+                throw new CasperException(sprintf("Casper API Response: [%s] [%s] %s", $endpoint, $json_code, $json_message));
             } else {
-                throw new CasperException("Casper API Response: [{$endpoint}] [{$code}] Unknown Error\nResponse: {$response}");
+                throw new CasperException(sprintf("Casper API Response: [%s] [%s] Unknown Error\nResponse: %s", $endpoint, $code, $response));
             }
 
         }

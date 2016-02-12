@@ -1,7 +1,9 @@
 <?php
 
-//use UnexpectedValueException;
-//use DomainException;
+namespace Casper\Developer\Util;
+
+use UnexpectedValueException;
+use DomainException;
 
 /**
  * JSON Web Token implementation, based on this spec:

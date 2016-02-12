@@ -2,19 +2,18 @@
 
 namespace Snapchat\API\Request;
 
-use Snapchat\API\Response\Model\Conversation;
 use Snapchat\Snapchat;
 
 class ClearConversationRequest extends BaseRequest {
 
     /**
      * @param $snapchat Snapchat
-     * @param $conversation Conversation
+     * @param $conversationId string Conversation ID
      */
-    public function __construct($snapchat, $conversation){
+    public function __construct($snapchat, $conversationId){
 
         parent::__construct($snapchat);
-        $this->addParam("conversation_id", $conversation->getId());
+        $this->addParam("conversation_id", $conversationId);
 
     }
 

@@ -2,24 +2,23 @@
 
 namespace Snapchat\API\Request;
 
-use Snapchat\API\Response\Model\Story;
 use Snapchat\Snapchat;
 use Snapchat\Util\RequestUtil;
 
 class UpdateStoriesRequest extends BaseRequest {
 
-    private $story;
+    private $storyId;
 
     private $screenshot = false;
 
     /**
      * @param $snapchat Snapchat
-     * @param $story Story
+     * @param $storyId string Story Id
      */
-    public function __construct($snapchat, $story){
+    public function __construct($snapchat, $storyId){
 
         parent::__construct($snapchat);
-        $this->story = $story;
+        $this->storyId = $storyId;
 
     }
 
@@ -56,7 +55,7 @@ class UpdateStoriesRequest extends BaseRequest {
         $friend_stories = array();
 
         $friend_stories[] = array(
-            "id" => $this->story->getId(),
+            "id" => $this->storyId,
             "screenshot_count" => $this->screenshot ? "1" : "0",
             "timestamp" => RequestUtil::getCurrentMillis()
         );

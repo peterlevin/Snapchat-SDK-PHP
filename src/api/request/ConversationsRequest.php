@@ -18,7 +18,7 @@ class ConversationsRequest extends BaseRequest {
         $this->addParam("checksums_dict", "");
         $this->addParam("features_map", "{}");
 
-        if($offset != null) {
+        if(!empty($offset)) {
             $this->addParam("offset", $offset);
         }
 

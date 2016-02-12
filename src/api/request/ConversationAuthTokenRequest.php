@@ -3,20 +3,19 @@
 namespace Snapchat\API\Request;
 
 use Snapchat\API\Response\ConversationAuthTokenResponse;
-use Snapchat\API\Response\Model\Conversation;
-use Snapchat\Util\RequestUtil;
+use Snapchat\Snapchat;
 
 class ConversationAuthTokenRequest extends BaseRequest {
 
     /**
-     * @param $conversation Conversation
+     * @param $snapchat Snapchat
+     * @param $conversationId string Conversation ID
      */
-    public function initWithConversation($conversation){
-        $this->addParam("conversation_id", $conversation->getId());
-    }
+    public function __construct($snapchat, $conversationId){
 
-    public function initWithUsername($username){
-        $this->addParam("conversation_id", RequestUtil::getConversationID($this->snapchat->getUsername(), $username));
+        parent::__construct($snapchat);
+        $this->addParam("conversation_id", $conversationId);
+
     }
 
     public function getMethod(){

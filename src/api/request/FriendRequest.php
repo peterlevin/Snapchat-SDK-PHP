@@ -4,6 +4,7 @@ namespace Snapchat\API\Request;
 
 use Snapchat\API\Response\FriendResponse;
 use Snapchat\API\Response\Model\Friend;
+use Snapchat\Snapchat;
 
 class FriendRequest extends BaseRequest {
 
@@ -17,24 +18,25 @@ class FriendRequest extends BaseRequest {
     const KEY_IDENTITY_PROFILE_ADD_FRIENDS_BY_USERNAME_PAGE = "PROFILE_ADD_FRIENDS_BY_USERNAME_PAGE";
 
     /**
-     * @param $username string Username to Init with.
+     * @param $snapchat Snapchat
+     * @param $username string Friend Username
      */
-    public function initWithUsername($username){
-        $this->addParam("friend", $username);
-        $this->addParam(self::KEY_IDENTITY_CELL_INDEX, "0");
-        $this->addParam(self::KEY_IDENTITY_PROFILE_PAGE, self::KEY_IDENTITY_PROFILE_ADD_FRIENDS_BY_USERNAME_PAGE);
-    }
+    public function __construct($snapchat, $username){
 
-    /**
-     * @param $friend Friend Friend to Init with.
-     */
-    public function initWithFriend($friend){
-        $this->initWithUsername($friend->getName());
-        if(!empty($friend->getUserId())){
+        parent::__construct($snapchat);
+
+        $this->addParam("friend", $username);
+        $friend = $this->snapchat->findCachedFriend($username);
+
+        if($friend != null){
             $this->addParam(self::KEY_FRIEND_ID, $friend->getUserId());
             $this->addParam(self::KEY_IDENTITY_CELL_INDEX, "-1");
             $this->addParam(self::KEY_IDENTITY_PROFILE_PAGE, self::KEY_IDENTITY_PROFILE_MY_FRIENDS_PAGE);
+        } else {
+            $this->addParam(self::KEY_IDENTITY_CELL_INDEX, "0");
+            $this->addParam(self::KEY_IDENTITY_PROFILE_PAGE, self::KEY_IDENTITY_PROFILE_ADD_FRIENDS_BY_USERNAME_PAGE);
         }
+
     }
 
     public function updateDisplayName($display){

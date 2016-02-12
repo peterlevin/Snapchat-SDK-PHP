@@ -19,7 +19,14 @@ class RequestUtil {
     }
 
     public static function getConversationID($username, $with){
-        return implode("~", array($username, $with));
+
+        $usernames = array($username, $with);
+
+        //Conversation Usernames are in Alphabetical Order
+        sort($usernames);
+
+        return implode("~", $usernames);
+
     }
 
 }

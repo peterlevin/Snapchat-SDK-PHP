@@ -2,7 +2,7 @@
 
 namespace Snapchat;
 
-use CasperDevelopersAPI;
+use Casper\Developer\CasperDeveloperAPI;
 use Snapchat\API\Request\AllUpdatesRequest;
 use Snapchat\API\Request\AuthStoryBlobRequest;
 use Snapchat\API\Request\BlobRequest;
@@ -23,6 +23,7 @@ use Snapchat\API\Request\UploadMediaRequest;
 use Snapchat\API\Request\PhoneVerifyRequest;
 use Snapchat\API\Response\FriendsResponse;
 use Snapchat\API\Response\Model\Conversation;
+use Snapchat\API\Response\Model\Friend;
 use Snapchat\API\Response\Model\Snap;
 use Snapchat\API\Response\Model\Story;
 use Snapchat\API\Response\StoriesResponse;
@@ -32,11 +33,6 @@ use Snapchat\Util\RequestUtil;
 use Snapchat\Util\StringUtil;
 
 class Snapchat {
-
-    const EXT_JPG = "jpg";
-    const EXT_PNG = "png";
-    const EXT_MP4 = "mp4";
-    const EXT_ZIP = "zip";
 
     /**
      *
@@ -88,7 +84,7 @@ class Snapchat {
 
     /**
      * Casper Developer API instance
-     * @var string
+     * @var CasperDeveloperAPI
      */
     private $casper;
 
@@ -99,7 +95,13 @@ class Snapchat {
     private $proxy;
 
     /**
-     * @param $casper CasperDevelopersAPI
+     * Enable/Disable SSL Verification of Peer
+     * @var boolean
+     */
+    private $verifyPeer = true;
+
+    /**
+     * @param $casper CasperDeveloperAPI
      */
     public function __construct($casper){
         $this->setCasper($casper);
@@ -132,7 +134,7 @@ class Snapchat {
     }
 
     public function isLoggedIn(){
-        return !empty($this->getUsername()) && !empty($this->getAuthToken());
+        return !empty($this->username) && !empty($this->auth_token);
     }
 
     /**
@@ -152,16 +154,32 @@ class Snapchat {
     }
 
     /**
-     * Set the CasperDevelopersAPI instance to use
-     * @param $casper CasperDevelopersAPI
+     * Enable/Disable SSL Verification of Peer
+     * @param $verifyPeer boolean
+     */
+    public function setVerifyPeer($verifyPeer){
+        $this->verifyPeer = $verifyPeer;
+    }
+
+    /**
+     * SSL Verification of Peer
+     * @return string
+     */
+    public function shouldVerifyPeer(){
+        return $this->verifyPeer;
+    }
+
+    /**
+     * Set the CasperDeveloperAPI instance to use
+     * @param $casper CasperDeveloperAPI
      */
     public function setCasper($casper){
         $this->casper = $casper;
     }
 
     /**
-     * Get the CasperDevelopersAPI instance to use
-     * @return CasperDevelopersAPI
+     * Get the CasperDeveloperAPI instance to use
+     * @return CasperDeveloperAPI
      */
     public function getCasper(){
         return $this->casper;
@@ -180,6 +198,7 @@ class Snapchat {
 
         $request = new LoginRequest($this->getCasper(), $username, $password);
         $request->setProxy($this->getProxy());
+        $request->setVerifyPeer($this->shouldVerifyPeer());
         $response = $request->execute();
 
         if($response->getStatus() != 0){
@@ -361,18 +380,25 @@ class Snapchat {
     }
 
     /**
-     * @param $snap Snap The Snap to mark Viewed
+     *
+     * This method will accept a Snap object or a Snap Id string as the first parameter.
+     *
+     * @param $snapId string|Snap The Snap or Snap ID to mark Viewed
      * @param bool|false $screenshot Whether to mark this Snap as Screenshot
      * @param bool|false $replayed Whether to mark this Snap as Replayed
      * @throws \Exception
      */
-    public function markSnapViewed($snap, $screenshot = false, $replayed = false){
+    public function markSnapViewed($snapId, $screenshot = false, $replayed = false){
 
         if(!$this->isLoggedIn()){
             throw new \Exception("You must be logged in to call markSnapViewed().");
         }
 
-        $request = new UpdateSnapsRequest($this, $snap);
+        if($snapId instanceof Snap){
+            $snapId = $snapId->getId();
+        }
+
+        $request = new UpdateSnapsRequest($this, $snapId);
         $request->setScreenshot($screenshot);
         $request->setReplayed($replayed);
         $request->execute();
@@ -380,17 +406,24 @@ class Snapchat {
     }
 
     /**
-     * @param $story Story The Story to mark Viewed
+     *
+     * This method will accept a Story object or a Story Media Id string as the first parameter.
+     *
+     * @param $storyId string|Story The Story or Story Media ID to mark Viewed
      * @param bool|false $screenshot Whether to mark this Story as Screenshot
      * @throws \Exception
      */
-    public function markStoryViewed($story, $screenshot = false){
+    public function markStoryViewed($storyId, $screenshot = false){
 
         if(!$this->isLoggedIn()){
             throw new \Exception("You must be logged in to call markStoryViewed().");
         }
 
-        $request = new UpdateStoriesRequest($this, $story);
+        if($storyId instanceof Story){
+            $storyId = $storyId->getMediaId();
+        }
+
+        $request = new UpdateStoriesRequest($this, $storyId);
         $request->setScreenshot($screenshot);
         $request->execute();
 
@@ -407,15 +440,14 @@ class Snapchat {
             throw new \Exception("You must be logged in to call addFriend().");
         }
 
-        $request = new FriendRequest($this);
-        $request->initWithUsername($username);
+        $request = new FriendRequest($this, $username);
         $request->add();
         return $request->execute();
 
     }
 
     /**
-     * @param $username string Snapchat Username to Delete
+     * @param $username string|Friend Friend or Username to Delete
      * @return API\Response\FriendResponse
      * @throws \Exception
      */
@@ -425,23 +457,18 @@ class Snapchat {
             throw new \Exception("You must be logged in to call deleteFriend().");
         }
 
-        $friend = $this->findCachedFriend($username);
-
-        $request = new FriendRequest($this);
-
-        if($friend != null){
-            $request->initWithFriend($friend);
-        } else {
-            $request->initWithUsername($username);
+        if($username instanceof Friend){
+            $username = $username->getName();
         }
 
+        $request = new FriendRequest($this, $username);
         $request->delete();
         return $request->execute();
 
     }
 
     /**
-     * @param $username string Snapchat Username to Update
+     * @param $username string|Friend Friend or Username to Update
      * @param $display string The new Display Name to set
      * @return API\Response\FriendResponse
      * @throws \Exception
@@ -452,23 +479,18 @@ class Snapchat {
             throw new \Exception("You must be logged in to call updateFriendDisplayName().");
         }
 
-        $friend = $this->findCachedFriend($username);
-
-        $request = new FriendRequest($this);
-
-        if($friend != null){
-            $request->initWithFriend($friend);
-        } else {
-            $request->initWithUsername($username);
+        if($username instanceof Friend){
+            $username = $username->getName();
         }
 
+        $request = new FriendRequest($this, $username);
         $request->updateDisplayName($display);
         return $request->execute();
 
     }
 
     /**
-     * @param $username string Snapchat Username to Block
+     * @param $username string|Friend Friend or Username to Block
      * @return API\Response\FriendResponse
      * @throws \Exception
      */
@@ -478,23 +500,18 @@ class Snapchat {
             throw new \Exception("You must be logged in to call blockFriend().");
         }
 
-        $friend = $this->findCachedFriend($username);
-
-        $request = new FriendRequest($this);
-
-        if($friend != null){
-            $request->initWithFriend($friend);
-        } else {
-            $request->initWithUsername($username);
+        if($username instanceof Friend){
+            $username = $username->getName();
         }
 
+        $request = new FriendRequest($this, $username);
         $request->block();
         return $request->execute();
 
     }
 
     /**
-     * @param $username string Snapchat Username to Unblock
+     * @param $username string|Friend Friend or Username to Unblock
      * @return API\Response\FriendResponse
      * @throws \Exception
      */
@@ -504,18 +521,51 @@ class Snapchat {
             throw new \Exception("You must be logged in to call unblockFriend().");
         }
 
-        $friend = $this->findCachedFriend($username);
-
-        $request = new FriendRequest($this);
-
-        if($friend != null){
-            $request->initWithFriend($friend);
-        } else {
-            $request->initWithUsername($username);
+        if($username instanceof Friend){
+            $username = $username->getName();
         }
 
+        $request = new FriendRequest($this, $username);
         $request->unblock();
         return $request->execute();
+
+    }
+
+    /**
+     *
+     * Download a Snap to a File.
+     *
+     * @param $snapId string Id of the Snap to Download
+     * @param $file string File Path to save the Snap
+     * @param $file_overlay string File Path to save the Snap Overlay
+     * @param $zipped boolean if the Snap is Zipped
+     * @return MediaPath
+     * @throws \Exception
+     */
+    public function downloadSnapById($snapId, $file, $file_overlay = null, $zipped = null){
+
+        if(!$this->isLoggedIn()){
+            throw new \Exception("You must be logged in to call downloadSnapById().");
+        }
+
+        $request = new BlobRequest($this, $snapId);
+        $response = $request->execute();
+
+        if($file_overlay == null){
+            $file_overlay = sprintf("%s_overlay.png", $file);
+        }
+
+        if($zipped == null){
+            $zipped = $this->isDataZipped($response);
+        }
+
+        if($zipped){
+            $this->unzipBlob($response, $file, $file_overlay);
+        } else {
+            file_put_contents($file, $response);
+        }
+
+        return new MediaPath($file, $file_overlay);
 
     }
 
@@ -535,22 +585,41 @@ class Snapchat {
             throw new \Exception("You must be logged in to call downloadSnap().");
         }
 
-        $request = new BlobRequest($this, $snap);
+        return $this->downloadSnapById($snap->getId(), $file, $file_overlay, $snap->isZipped());
+
+    }
+
+    /**
+     *
+     * Download a Story to a File.
+     *
+     * @param $mediaId string Media Id of the Story to Download
+     * @param $mediaKey string Media Key
+     * @param $mediaIv string Media IV
+     * @param $file string File Path to save the Story
+     * @param $file_overlay string File Path to save the Story Overlay
+     * @param $zipped boolean if the Story is Zipped
+     * @return MediaPath
+     * @throws \Exception
+     */
+    public function downloadStoryById($mediaId, $mediaKey, $mediaIv, $file, $file_overlay = null, $zipped = null){
+
+        if(!$this->isLoggedIn()){
+            throw new \Exception("You must be logged in to call downloadStoryById().");
+        }
+
+        $request = new AuthStoryBlobRequest($this, $mediaId, $mediaKey, $mediaIv);
         $response = $request->execute();
 
         if($file_overlay == null){
-            $file_overlay = sprintf("%s_overlay", $file);
+            $file_overlay = sprintf("%s_overlay.png", $file);
         }
 
-        $file_overlay = sprintf("%s.%s", $file_overlay, self::EXT_PNG);
-
-        if($snap->isPhoto()){
-            $file = sprintf("%s.%s", $file, self::EXT_JPG);
-        } else if($snap->isVideo()){
-            $file = sprintf("%s.%s", $file, self::EXT_MP4);
+        if($zipped == null){
+            $zipped = $this->isDataZipped($response);
         }
 
-        if($snap->isZipped()){
+        if($zipped){
             $this->unzipBlob($response, $file, $file_overlay);
         } else {
             file_put_contents($file, $response);
@@ -576,51 +645,29 @@ class Snapchat {
             throw new \Exception("You must be logged in to call downloadStory().");
         }
 
-        $request = new AuthStoryBlobRequest($this, $story);
-        $response = $request->execute();
-
-        if($file_overlay == null){
-            $file_overlay = sprintf("%s_overlay", $file);
-        }
-
-        $file_overlay = sprintf("%s.%s", $file_overlay, self::EXT_PNG);
-
-        if($story->isPhoto()){
-            $file = sprintf("%s.%s", $file, self::EXT_JPG);
-        } else if($story->isVideo()){
-            $file = sprintf("%s.%s", $file, self::EXT_MP4);
-        }
-
-        if($story->isZipped()){
-            $this->unzipBlob($response, $file, $file_overlay);
-        } else {
-            file_put_contents($file, $response);
-        }
-
-        return new MediaPath($file, $file_overlay);
+        return $this->downloadStoryById($story->getMediaId(), $story->getMediaKey(), $story->getMediaId(), $file, $file_overlay, $story->isZipped());
 
     }
 
     /**
      *
-     * Download your SnapTag to a File
+     * Download your SnapTag as a PNG to a File
      *
      * @param $file string File Path to save the SnapTag
      * @return string Where the SnapTag was Saved
      * @throws \Exception
      */
-    public function downloadSnapTag($file){
+    public function downloadMySnapTag($file){
 
         if(!$this->isLoggedIn()){
-            throw new \Exception("You must be logged in to call downloadSnapTag().");
+            throw new \Exception("You must be logged in to call downloadMySnapTag().");
         }
 
         $updates = $this->getCachedUpdatesResponse();
 
-        $request = new SnapTagRequest($this, $updates->getQrPath());
+        $request = new SnapTagRequest($this);
+        $request->getMySnapTag($updates->getQrPath());
         $response = $request->execute();
-
-        $file = sprintf("%s.%s", $file, self::EXT_PNG);
 
         file_put_contents($file, $response);
 
@@ -628,9 +675,47 @@ class Snapchat {
 
     }
 
+    /**
+     *
+     * Download a Friends SnapTag
+     *
+     * @param $username string Username of Friend to get SnapTag for
+     * @param $file string File Path to save the SnapTag
+     * @param string $type Type of SnapTag to Download
+     * @return string Where the SnapTag was Saved
+     * @throws \Exception
+     */
+    public function downloadSnapTagByUsername($username, $file, $type = SnapTagRequest::TYPE_PNG){
+
+        if(!$this->isLoggedIn()){
+            throw new \Exception("You must be logged in to call downloadSnapTagByUsername().");
+        }
+
+        $request = new SnapTagRequest($this);
+        $request->getSnapTagByUsername($username, $type);
+        $response = $request->execute();
+
+        $data = base64_decode($response->getImageData());
+        file_put_contents($file, $data);
+
+        return $file;
+
+    }
+
+    /**
+     *
+     * Check if Data is a Zip File
+     *
+     * @param $data
+     * @return bool
+     */
+    private function isDataZipped($data){
+        return StringUtil::startsWith($data, "\x50\x4b\x03\x04");
+    }
+
     private function unzipBlob($data, $file_blob, $file_overlay){
 
-        $file_temp = tempnam(sys_get_temp_dir(), self::EXT_ZIP);
+        $file_temp = tempnam(sys_get_temp_dir(), "zip");
         file_put_contents($file_temp, $data);
 
         $zip = zip_open($file_temp);
@@ -863,7 +948,8 @@ class Snapchat {
         }
 
         $updatesResponse = $this->getCachedUpdatesResponse();
-        if(empty($updatesResponse->getMobile())){
+        $mobile = $updatesResponse->getMobile();
+        if(empty($mobile)){
             throw new \Exception("You must Verify your Phone Number to use Find Friends.");
         }
 
@@ -905,21 +991,23 @@ class Snapchat {
      * @param $usernames array Usernames to get IDs for
      * @return array Array of User IDs in same order as input array
      */
-    private function getUserIDs($usernames){
+    public function getUserIDs($usernames){
 
         $map = array();
 
         if($this->cached_friends_response != null){
 
             foreach($this->cached_friends_response->getFriends() as $friend){
-                if(in_array($friend->getName(), $usernames) && !empty($friend->getUserId())){
-                    $map[$friend->getName()] = $friend->getUserId();
+                $friend_user_id = $friend->getUserId();
+                if(in_array($friend->getName(), $usernames) && !empty($friend_user_id)){
+                    $map[$friend->getName()] = $friend_user_id;
                 }
             }
 
             foreach($this->cached_friends_response->getAddedFriends() as $friend){
-                if(in_array($friend->getName(), $usernames) && !empty($friend->getUserId())){
-                    $map[$friend->getName()] = $friend->getUserId();
+                $friend_user_id = $friend->getUserId();
+                if(in_array($friend->getName(), $usernames) && !empty($friend_user_id)){
+                    $map[$friend->getName()] = $friend_user_id;
                 }
             }
 
@@ -937,6 +1025,7 @@ class Snapchat {
 
     /**
      * @param $username string Username to get Conversation for
+     * @return Conversation
      */
     public function getConversation($username){
 
@@ -949,6 +1038,7 @@ class Snapchat {
 
     /**
      * @param $username string Username to get Conversation for
+     * @return Conversation
      */
     public function getCachedConversation($username){
 
@@ -988,8 +1078,7 @@ class Snapchat {
             }
         }
 
-        $request = new ConversationAuthTokenRequest($this);
-        $request->initWithUsername($username);
+        $request = new ConversationAuthTokenRequest($this, $username);
         $response = $request->execute();
 
         return $response->getMessagingAuth();

@@ -2,7 +2,7 @@
 
 require("../src/autoload.php");
 
-$casper = new CasperDevelopersAPI("api_key", "api_secret");
+$casper = new \Casper\Developer\CasperDeveloperAPI("api_key", "api_secret");
 $snapchat = new \Snapchat\Snapchat($casper);
 
 try {

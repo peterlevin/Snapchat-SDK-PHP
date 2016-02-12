@@ -2,26 +2,30 @@
 
 namespace Snapchat\API\Request;
 
-use Snapchat\API\Response\Model\Snap;
 use Snapchat\Snapchat;
 
 class UpdateSnapsRequest extends BaseRequest {
 
-    private $snap;
+    private $snapId;
+    private $secondsViewedFor;
 
     private $replayed = false;
     private $screenshot = false;
 
     /**
      * @param $snapchat Snapchat
-     * @param $snap Snap
+     * @param $snapId string Snap Id
+     * @param $secondsViewedFor int Seconds the Snap was viewed for.
      */
-    public function __construct($snapchat, $snap){
+    public function __construct($snapchat, $snapId, $secondsViewedFor = 1){
 
         parent::__construct($snapchat);
-        $this->snap = $snap;
 
-        $this->addParam("added_friends_timestamp", $snapchat->getCachedUpdatesResponse()->getAddedFriendsTimestamp());
+        $this->snapId = $snapId;
+        $this->secondsViewedFor = $secondsViewedFor;
+
+        $cachedUpdates = $snapchat->getCachedUpdatesResponse();
+        $this->addParam("added_friends_timestamp", $cachedUpdates->getAddedFriendsTimestamp());
 
     }
 
@@ -63,10 +67,10 @@ class UpdateSnapsRequest extends BaseRequest {
      */
     public function execute(){
 
-        $viewed_time = $this->snap->getViewTime() * 1000;
+        $viewed_time = $this->secondsViewedFor * 1000;
 
         $json = json_encode(array(
-            $this->snap->getId() => array(
+            $this->snapId => array(
                 "c" => $this->screenshot ? "1" : "0",
                 "replayed" => $this->replayed ? "1" : "0",
                 "sv" => $viewed_time,

@@ -352,4 +352,24 @@ class Snap {
         return $this->getType() == self::TYPE_VIDEO || $this->getType() == self::TYPE_VIDEO_NOAUDIO;
     }
 
+    /**
+     *
+     * Get the File Extension for this Snap
+     *
+     * @return string
+     */
+    public function getFileExtension(){
+
+        if($this->isPhoto()){
+            return "jpg";
+        }
+
+        if($this->isVideo()){
+            return "mp4";
+        }
+
+        return "bin";
+
+    }
+
 }

@@ -2,6 +2,7 @@
 
 namespace Snapchat\API\Request;
 
+use Casper\Developer\Exception\CasperException;
 use Snapchat\API\Constants;
 use Snapchat\API\Framework\Request;
 use Snapchat\API\Framework\Response;
@@ -31,6 +32,7 @@ abstract class BaseRequest extends Request {
 
         $this->setSnapchat($snapchat);
         $this->setProxy($snapchat->getProxy());
+        $this->setVerifyPeer($snapchat->shouldVerifyPeer());
 
     }
 
@@ -88,22 +90,22 @@ abstract class BaseRequest extends Request {
      * Execute the Request
      *
      * @return object Response Object
-     * @throws \CasperException
+     * @throws CasperException
      * @throws \Exception
      */
     public function execute(){
 
-        $endpoint = $this->snapchat->getCasper()->getSnapchatIOSEndpointAuth($this->snapchat->getUsername(), $this->snapchat->getAuthToken(), $this->getEndpoint());
+        $endpointAuth = $this->snapchat->getCasper()->getSnapchatIOSEndpointAuth($this->snapchat->getUsername(), $this->snapchat->getAuthToken(), $this->getEndpoint());
 
-        foreach($endpoint->headers as $key => $value){
+        foreach($endpointAuth["headers"] as $key => $value){
             $this->addHeader($key, $value);
         }
 
-        foreach($endpoint->params as $key => $value){
+        foreach($endpointAuth["params"] as $key => $value){
             $this->addParam($key, $value);
         }
 
-        $this->casperAuthCallback($endpoint);
+        $this->casperAuthCallback($endpointAuth);
 
         $response = parent::execute();
         $this->response = $response;

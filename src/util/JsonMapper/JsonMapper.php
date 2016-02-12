@@ -1,27 +1,13 @@
 <?php
-/**
- * Part of JsonMapper
- *
- * PHP version 5
- *
- * @category Netresearch
- * @package  JsonMapper
- * @author   Christian Weiske <christian.weiske@netresearch.de>
- * @license  OSL-3.0 http://opensource.org/licenses/osl-3.0
- * @link     http://www.netresearch.de/
- */
 
-/**
- * Automatically map JSON structures into objects.
- *
- * @category Netresearch
- * @package  JsonMapper
- * @author   Christian Weiske <christian.weiske@netresearch.de>
- * @license  OSL-3.0 http://opensource.org/licenses/osl-3.0
- * @link     http://www.netresearch.de/
- */
-class JsonMapper
-{
+namespace Snapchat\Util\JsonMapper;
+
+use InvalidArgumentException;
+use ReflectionClass;
+use ReflectionProperty;
+
+class JsonMapper {
+
     /**
      * PSR-3 compatible logger object
      *
@@ -574,5 +560,5 @@ class JsonMapper
     {
         $this->logger = $logger;
     }
+
 }
-?>

@@ -2,7 +2,7 @@
 
 require("../src/autoload.php");
 
-$casper = new CasperDevelopersAPI("api_key", "api_secret");
+$casper = new \Casper\Developer\CasperDeveloperAPI("api_key", "api_secret");
 $snapchat = new \Snapchat\Snapchat($casper);
 
 try {
@@ -14,7 +14,7 @@ try {
     $uploadPayload = $snapchat->uploadPhoto("photo.jpg");
 
     //Send Snap
-    $snapchat->sendMedia($uploadPayload, 10, array("recipient_username"));
+    $snapchat->sendMedia($uploadPayload, 10, array("recipient"));
 
 } catch(Exception $e){
     //Something went wrong...

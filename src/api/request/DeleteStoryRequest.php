@@ -2,19 +2,18 @@
 
 namespace Snapchat\API\Request;
 
-use Snapchat\API\Response\Model\Story;
 use Snapchat\Snapchat;
 
 class DeleteStoryRequest extends BaseRequest {
 
     /**
      * @param $snapchat Snapchat
-     * @param $story Story
+     * @param $storyId string Story Id
      */
-    public function __construct($snapchat, $story){
+    public function __construct($snapchat, $storyId){
 
         parent::__construct($snapchat);
-        $this->addParam("story_id", $story->getId());
+        $this->addParam("story_id", $storyId);
 
     }
 
