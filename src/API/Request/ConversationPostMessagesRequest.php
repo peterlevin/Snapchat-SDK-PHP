@@ -5,7 +5,7 @@ namespace Snapchat\API\Request;
 use Snapchat\API\Response\Model\ChatMessage;
 use Snapchat\Snapchat;
 
-class ConversationPostMessagesRequest extends BaseRequest {
+class ConversationPostMessagesRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat

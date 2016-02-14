@@ -4,7 +4,7 @@ namespace Snapchat\API\Request;
 
 use Snapchat\API\Response\SnapTagResponse;
 
-class SnapTagRequest extends BaseRequest {
+class SnapTagRequest extends AuthenticatedBaseRequest {
 
     const TYPE_PNG = "PNG";
     const TYPE_SVG = "SVG";

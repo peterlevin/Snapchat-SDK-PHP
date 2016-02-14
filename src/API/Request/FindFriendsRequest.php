@@ -5,7 +5,7 @@ namespace Snapchat\API\Request;
 use Snapchat\API\Response\FindFriendsResponse;
 use Snapchat\Snapchat;
 
-class FindFriendsRequest extends BaseRequest {
+class FindFriendsRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat
@@ -15,7 +15,7 @@ class FindFriendsRequest extends BaseRequest {
     public function __construct($snapchat, $country, $query){
 
         parent::__construct($snapchat);
-        $this->addParam("countryCode", $country);
+        $this->addParam("countryCode", strtoupper($country));
         $this->addParam("numbers", json_encode($query, JSON_FORCE_OBJECT));
         $this->addParam("should_recommend", "false");
 

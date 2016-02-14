@@ -5,7 +5,7 @@ namespace Snapchat\API\Request;
 use Snapchat\Snapchat;
 use Snapchat\Util\RequestUtil;
 
-class UpdateStoriesRequest extends BaseRequest {
+class UpdateStoriesRequest extends AuthenticatedBaseRequest {
 
     private $storyId;
 

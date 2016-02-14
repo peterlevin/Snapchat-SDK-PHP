@@ -2,14 +2,14 @@
 
 namespace Snapchat\API\Request;
 
-class ClearFeedRequest extends AuthenticatedBaseRequest {
+class GetCaptchaRequest extends AuthenticatedBaseRequest {
 
     public function getMethod(){
         return self::POST;
     }
 
     public function getEndpoint(){
-        return "/loq/clear_feed";
+        return "/bq/get_captcha";
     }
 
     public function getResponseObject(){

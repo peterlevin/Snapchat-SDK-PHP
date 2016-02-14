@@ -6,7 +6,7 @@ use Snapchat\API\Response\ConversationResponse;
 use Snapchat\Snapchat;
 use Snapchat\Util\RequestUtil;
 
-class ConversationRequest extends BaseRequest {
+class ConversationRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat

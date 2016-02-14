@@ -6,7 +6,7 @@ use Snapchat\API\Response\FriendResponse;
 use Snapchat\API\Response\Model\Friend;
 use Snapchat\Snapchat;
 
-class FriendRequest extends BaseRequest {
+class FriendRequest extends AuthenticatedBaseRequest {
 
     const KEY_ACTION = "action";
     const KEY_ADDED_BY = "added_by";

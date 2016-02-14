@@ -6,7 +6,7 @@ use Snapchat\API\Framework\RequestFile;
 use Snapchat\API\Request\Model\UploadMediaPayload;
 use Snapchat\Snapchat;
 
-class UploadMediaRequest extends BaseRequest {
+class UploadMediaRequest extends AuthenticatedBaseRequest {
 
     const TYPE_IMAGE = 0;
     const TYPE_VIDEO = 1;

@@ -16,7 +16,7 @@ abstract class BaseRequest extends Request {
     public $snapchat;
 
     /**
-     * @var Response
+     * @var Response The Response Object
      */
     private $response;
 
@@ -44,16 +44,23 @@ abstract class BaseRequest extends Request {
     }
 
     /**
-     * @return int Get Response Code of Completed Request
-     */
-    public function getResponseCode(){
-        return $this->response->getCode();
-    }
-
-    /**
      * @return string The API Endpoint
      */
     public abstract function getEndpoint();
+
+    /**
+     * @return string Username
+     */
+    public function getUsername(){
+        return "";
+    }
+
+    /**
+     * @return string AuthToken
+     */
+    public function getAuthToken(){
+        return Constants::STATIC_TOKEN;
+    }
 
     /**
      * @return object The class instance to map the JSON to.
@@ -79,23 +86,27 @@ abstract class BaseRequest extends Request {
 
     /**
      * This method will be called before the Snapchat API request is made.
-     * @param $endpointAuth object EndpointAuth from Casper Response
+     * @param $endpointEndpointAuth object EndpointAuth from Casper Response
      */
-    public function casperAuthCallback($endpointAuth){
+    public function casperAuthCallback($endpointEndpointAuth){
 
+    }
+
+    public function getCachedResponse(){
+        return $this->response;
     }
 
     /**
      *
      * Execute the Request
      *
-     * @return object Response Object
+     * @return object Response Data
      * @throws CasperException
      * @throws \Exception
      */
     public function execute(){
 
-        $endpointAuth = $this->snapchat->getCasper()->getSnapchatIOSEndpointAuth($this->snapchat->getUsername(), $this->snapchat->getAuthToken(), $this->getEndpoint());
+        $endpointAuth = $this->snapchat->getCasper()->getSnapchatIOSEndpointAuth($this->getUsername(), $this->getAuthToken(), $this->getEndpoint());
 
         foreach($endpointAuth["headers"] as $key => $value){
             $this->addHeader($key, $value);

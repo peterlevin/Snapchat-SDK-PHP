@@ -4,7 +4,7 @@ namespace Snapchat\API\Request;
 
 use Snapchat\Snapchat;
 
-class ClearConversationRequest extends BaseRequest {
+class ClearConversationRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat

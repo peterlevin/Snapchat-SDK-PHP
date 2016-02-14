@@ -4,7 +4,7 @@ namespace Snapchat\API\Request;
 
 use Snapchat\Snapchat;
 
-class DeleteStoryRequest extends BaseRequest {
+class DeleteStoryRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat

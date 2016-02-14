@@ -3,6 +3,8 @@
 
 namespace Snapchat\API\Framework;
 
+use Snapchat\API\Framework\Curl\Curl;
+
 class Response {
 
     const OK = 200;
@@ -11,17 +13,21 @@ class Response {
     const FORBIDDEN = 403;
 
     /**
-     * @var int Response Code;
+     * @var Curl Curl Object
      */
-    private $code;
+    private $curl;
 
     /**
      * @var object Response Data;
      */
     private $data;
 
-    public function __construct($code, $data){
-        $this->code = $code;
+    /**
+     * @param $curl Curl
+     * @param $data
+     */
+    public function __construct($curl, $data){
+        $this->curl = $curl;
         $this->data = $data;
     }
 
@@ -32,7 +38,7 @@ class Response {
      * @return int Response Code
      */
     public function getCode(){
-        return $this->code;
+        return $this->curl->httpStatusCode;
     }
 
     /**
@@ -47,12 +53,38 @@ class Response {
 
     /**
      *
+     * Get Response Headers
+     *
+     * @return array Response Data
+     */
+    public function getHeaders(){
+
+        $headers = $this->curl->responseHeaders;
+
+        if($headers != null){
+            return $headers;
+        }
+
+        return array();
+
+    }
+
+    public function getContentDispositionFilename(){
+
+        $headers = $this->getHeaders();
+        parse_str($headers["Content-Disposition"], $results);
+        return $results["attachment;filename"];
+
+    }
+
+    /**
+     *
      * Check if the Response was 200 OK
      *
      * @return bool
      */
     public function isOK(){
-        return $this->code == self::OK;
+        return $this->getCode() == self::OK;
     }
 
 }

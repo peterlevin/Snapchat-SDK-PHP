@@ -2,10 +2,10 @@
 
 namespace Snapchat\API\Request;
 
-use Casper\Developer\CasperDeveloperAPI;
 use Casper\Developer\Exception\CasperException;
 use Snapchat\API\Framework\Request;
 use Snapchat\API\Response\LoginResponse;
+use Snapchat\Snapchat;
 
 class LoginRequest extends Request {
 
@@ -14,28 +14,25 @@ class LoginRequest extends Request {
     private $username;
     private $password;
 
-    private $dtoken1i;
-    private $dtoken1v;
-
     private $pre_auth_token;
 
     /**
-     * Casper Developer API instance
-     * @var CasperDeveloperAPI
+     * Snapchat Instance to Use
+     * @var Snapchat
      */
-    private $casper;
+    private $snapchat;
 
-    public function __construct($casper, $username, $password, $dtoken1i = null, $dtoken1v = null, $pre_auth_token = null){
+    public function __construct($snapchat, $username, $password, $pre_auth_token = null){
 
         parent::__construct();
 
-        $this->casper = $casper;
+        $this->snapchat = $snapchat;
+
+        $this->setProxy($this->snapchat->getProxy());
+        $this->setVerifyPeer($this->snapchat->shouldVerifyPeer());
 
         $this->username = $username;
         $this->password = $password;
-
-        $this->dtoken1i = $dtoken1i;
-        $this->dtoken1v = $dtoken1v;
 
         $this->pre_auth_token = $pre_auth_token;
 
@@ -62,7 +59,7 @@ class LoginRequest extends Request {
         $this->clearHeaders();
         $this->clearParams();
 
-        $login = $this->casper->getSnapchatIOSLogin($this->username, $this->password, $this->dtoken1i, $this->dtoken1v, $this->pre_auth_token);
+        $login = $this->snapchat->getCasper()->getSnapchatIOSLogin($this->username, $this->password, $this->snapchat->getDeviceTokenIdentifier(), $this->snapchat->getDeviceTokenVerifier(), $this->pre_auth_token);
 
         $this->url = $login["url"];
 

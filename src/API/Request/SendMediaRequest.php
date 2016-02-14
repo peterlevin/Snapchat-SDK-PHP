@@ -6,7 +6,7 @@ use Snapchat\API\Request\Model\SendMediaPayload;
 use Snapchat\Snapchat;
 use Snapchat\Util\RequestUtil;
 
-class SendMediaRequest extends BaseRequest {
+class SendMediaRequest extends AuthenticatedBaseRequest {
 
     const ENDPOINT_SEND = "/loq/send";
     const ENDPOINT_POST_STORY = "/bq/post_story";

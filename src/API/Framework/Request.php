@@ -175,12 +175,12 @@ abstract class Request {
             }
 
             default: {
-                throw new \Exception(sprintf($error_format, "POST", $this->getUrl(), "Unsupported Request Method"));
+                throw new \Exception(sprintf($error_format, "UNKNOWN", $this->getUrl(), "Unsupported Request Method"));
             }
 
         }
 
-        return new Response($curl->httpStatusCode, $data);
+        return new Response($curl, $data);
 
     }
 

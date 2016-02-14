@@ -9,13 +9,18 @@ use Snapchat\API\Request\BlobRequest;
 use Snapchat\API\Request\ConversationAuthTokenRequest;
 use Snapchat\API\Request\ConversationRequest;
 use Snapchat\API\Request\ConversationsRequest;
+use Snapchat\API\Request\DeviceTokenRequest;
 use Snapchat\API\Request\FindFriendsRequest;
 use Snapchat\API\Request\FriendRequest;
+use Snapchat\API\Request\GetCaptchaRequest;
 use Snapchat\API\Request\LoginRequest;
 use Snapchat\API\Request\Model\SendMediaPayload;
 use Snapchat\API\Request\Model\UploadMediaPayload;
+use Snapchat\API\Request\RegisterRequest;
+use Snapchat\API\Request\RegisterUsernameRequest;
 use Snapchat\API\Request\SendMediaRequest;
 use Snapchat\API\Request\SnapTagRequest;
+use Snapchat\API\Request\SolveCaptchaRequest;
 use Snapchat\API\Request\StoriesRequest;
 use Snapchat\API\Request\UpdateSnapsRequest;
 use Snapchat\API\Request\UpdateStoriesRequest;
@@ -28,6 +33,8 @@ use Snapchat\API\Response\Model\Snap;
 use Snapchat\API\Response\Model\Story;
 use Snapchat\API\Response\StoriesResponse;
 use Snapchat\API\Response\UpdatesResponse;
+use Snapchat\Crypto\DeviceToken;
+use Snapchat\Model\Captcha;
 use Snapchat\Model\MediaPath;
 use Snapchat\Util\RequestUtil;
 use Snapchat\Util\StringUtil;
@@ -137,6 +144,10 @@ class Snapchat {
         return !empty($this->username) && !empty($this->auth_token);
     }
 
+    public function hasDeviceToken(){
+        return !empty($this->dtoken1i) && !empty($this->dtoken1v);
+    }
+
     /**
      * Set the HTTP Proxy to be used for Snapchat API Requests
      * @param $proxy string
@@ -196,9 +207,7 @@ class Snapchat {
      */
     public function login($username, $password){
 
-        $request = new LoginRequest($this->getCasper(), $username, $password);
-        $request->setProxy($this->getProxy());
-        $request->setVerifyPeer($this->shouldVerifyPeer());
+        $request = new LoginRequest($this, $username, $password);
         $response = $request->execute();
 
         if($response->getStatus() != 0){
@@ -225,6 +234,146 @@ class Snapchat {
 
         if(!empty($dtoken1i) && !empty($dtoken1v)){
             $this->initDeviceToken($dtoken1i, $dtoken1v);
+        }
+
+        return $response;
+
+    }
+
+    /**
+     *
+     * Register a new Snapchat Account.
+     * You will need to use the {@see registerUsername()} method to Set a Username to the Account
+     *
+     * @param $email string Email Address
+     * @param $password string Password
+     * @param $birthday string Birthday (format: YYYY-MM-DD)
+     * @param $timezone string TimeZone {@link http://php.net/manual/en/timezones.php}
+     * @return API\Response\RegisterResponse
+     * @throws \Exception
+     */
+    public function register($email, $password, $birthday, $timezone){
+
+        $request = new RegisterRequest($this, $email, $password, $birthday, $timezone);
+        $response = $request->execute();
+
+        if($response->getStatus() != 0){
+            throw new \Exception(sprintf("[%s] Registration Failed: %s", $response->getStatus(), $response->getMessage()));
+        }
+
+        $this->initWithAuthToken($response->getEmail(), $response->getAuthToken());
+
+        return $response;
+
+    }
+
+    /**
+     *
+     * Connect a Username to a newly Registered Account
+     * You will need to use the {@see register} method to Register a new Account first.
+     *
+     * One you have Registered your Username, you will need to either Verify your Phone Number or Complete a Captcha.
+     * If you decide to Verify your Number, use the {@see verifyPhoneNumber} method.
+     * If you decide to complate a Captcha, use the {@see getCaptcha} method.
+     *
+     * @param $username string Username chosen for this Account
+     * @return API\Response\RegisterUsernameResponse
+     * @throws \Exception
+     */
+    public function registerUsername($username){
+
+        $request = new RegisterUsernameRequest($this, $username);
+        $response = $request->execute();
+
+        if($response->getStatus() != 0){
+            throw new \Exception(sprintf("[%s] Registration Failed: %s", $response->getStatus(), $response->getMessage()));
+        }
+
+        $this->cached_updates_response = $response->getUpdatesResponse();
+        $this->cached_friends_response = $response->getFriendsResponse();
+        $this->cached_stories_response = $response->getStoriesResponse();
+        $this->cached_conversations = $response->getConversationsResponse();
+
+        $this->username = $this->cached_updates_response->getUsername();
+        $this->auth_token = $this->cached_updates_response->getAuthToken();
+
+        return $response;
+
+    }
+
+    /**
+     *
+     * Get a Captcha and save the files in a provided folder.
+     *
+     * @param $folder string Folder Path to save the Captcha files
+     * @return Captcha The Captcha Info
+     * @throws \Exception
+     */
+    public function getCaptcha($folder){
+
+        if(!$this->isLoggedIn()){
+            throw new \Exception("You must be logged in to call getCaptcha().");
+        }
+
+        $request = new GetCaptchaRequest($this);
+        $response = $request->execute();
+
+        $filename = $request->getCachedResponse()->getContentDispositionFilename();
+        $captchaId = str_replace(".zip", "", $filename);
+
+        $folder = $folder . DIRECTORY_SEPARATOR . $captchaId;
+        mkdir($folder);
+
+        $tempZipFile = tempnam(sys_get_temp_dir(), "zip");
+        file_put_contents($tempZipFile, $response);
+
+        $captchaFiles = array();
+
+        $zip = zip_open($tempZipFile);
+        if(is_resource($zip)){
+
+            while($zipEntry = zip_read($zip)){
+
+                $name = zip_entry_name($zipEntry);
+                $filename = $folder . DIRECTORY_SEPARATOR . $name;
+
+                if(zip_entry_open($zip, $zipEntry, "r")){
+
+                    file_put_contents($filename, zip_entry_read($zipEntry, zip_entry_filesize($zipEntry)));
+                    zip_entry_close($zipEntry);
+
+                    $captchaFiles[] = $filename;
+
+                }
+
+            }
+
+            zip_close($zip);
+
+        }
+
+        unlink($tempZipFile);
+
+        return new Captcha($captchaId, $folder, $captchaFiles);
+
+    }
+
+    /**
+     *
+     * Solve a Captcha
+     *
+     * @param $id string Captcha Id you are Solving
+     * @param $solution string The Solution to this Captcha (format: 0=No Ghost, 1=Ghost)
+     * @return API\Response\SolveCaptchaResponse
+     * @throws \Exception
+     */
+    public function solveCaptcha($id, $solution){
+
+        $request = new SolveCaptchaRequest($this, $id, $solution);
+        $response = $request->execute();
+
+        if($response->getStatus() != 0){
+            throw new \Exception(sprintf("[%s] Registration Failed: %s", $response->getStatus(), $response->getMessage()));
         }
 
         return $response;
@@ -1082,6 +1231,44 @@ class Snapchat {
         $response = $request->execute();
 
         return $response->getMessagingAuth();
+
+    }
+
+    /**
+     *
+     * Fetch a new DeviceToken from the Server
+     *
+     * @return DeviceToken
+     * @throws \Exception
+     */
+    public function getDeviceToken(){
+
+        $request = new DeviceTokenRequest($this);
+        $response = $request->execute();
+
+        $dtoken1i = $response->getDeviceTokenIdentifier();
+        $dtoken1v = $response->getDeviceTokenVerifier();
+
+        $this->initDeviceToken($dtoken1i, $dtoken1v);
+        return new DeviceToken($dtoken1i, $dtoken1v);
+
+    }
+
+    /**
+     *
+     * Get cached DeviceToken.
+     * If DeviceToken is not Cached, the API will be queried.
+     *
+     * @return DeviceToken
+     * @throws \Exception
+     */
+    public function getCachedDeviceToken(){
+
+        if($this->hasDeviceToken()){
+            return new DeviceToken($this->getDeviceTokenIdentifier(), $this->getDeviceTokenVerifier());
+        }
+
+        return $this->getDeviceToken();
 
     }
 

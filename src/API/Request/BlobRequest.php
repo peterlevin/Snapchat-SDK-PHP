@@ -4,7 +4,7 @@ namespace Snapchat\API\Request;
 
 use Snapchat\Snapchat;
 
-class BlobRequest extends BaseRequest {
+class BlobRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat

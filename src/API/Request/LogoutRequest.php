@@ -4,7 +4,7 @@ namespace Snapchat\API\Request;
 
 use Snapchat\Snapchat;
 
-class LogoutRequest extends BaseRequest {
+class LogoutRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat

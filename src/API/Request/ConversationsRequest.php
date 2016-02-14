@@ -5,7 +5,7 @@ namespace Snapchat\API\Request;
 use Snapchat\API\Response\ConversationsResponse;
 use Snapchat\Snapchat;
 
-class ConversationsRequest extends BaseRequest {
+class ConversationsRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat

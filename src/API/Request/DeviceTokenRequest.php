@@ -2,24 +2,24 @@
 
 namespace Snapchat\API\Request;
 
-use Snapchat\API\Response\AllUpdatesResponse;
+use Snapchat\API\Response\DeviceTokenResponse;
 
-class AllUpdatesRequest extends AuthenticatedBaseRequest {
+class DeviceTokenRequest extends BaseRequest {
 
     public function getMethod(){
         return self::POST;
     }
 
     public function getEndpoint(){
-        return "/loq/all_updates";
+        return "/loq/device_id";
     }
 
     public function getResponseObject(){
-        return new AllUpdatesResponse();
+        return new DeviceTokenResponse();
     }
 
     /**
-     * @return AllUpdatesResponse
+     * @return DeviceTokenResponse
      * @throws \Exception
      */
     public function execute(){

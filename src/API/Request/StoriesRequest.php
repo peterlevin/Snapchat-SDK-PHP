@@ -6,7 +6,7 @@ use Snapchat\API\Constants;
 use Snapchat\API\Response\StoriesResponse;
 use Snapchat\Snapchat;
 
-class StoriesRequest extends BaseRequest {
+class StoriesRequest extends AuthenticatedBaseRequest {
 
     /**
      * @param $snapchat Snapchat

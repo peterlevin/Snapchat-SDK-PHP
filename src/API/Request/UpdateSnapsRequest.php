@@ -4,7 +4,7 @@ namespace Snapchat\API\Request;
 
 use Snapchat\Snapchat;
 
-class UpdateSnapsRequest extends BaseRequest {
+class UpdateSnapsRequest extends AuthenticatedBaseRequest {
 
     private $snapId;
     private $secondsViewedFor;
